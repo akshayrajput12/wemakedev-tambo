@@ -1,3 +1,5 @@
+import NotificationCard from '../components/ui/NotificationCard';
+import { supabase } from '../lib/supabaseClient';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fetchJobBySlug, uploadResume, submitApplication } from '../lib/api/index';
@@ -8,6 +10,19 @@ export default function JobApplyPage() {
     const [job, setJob] = useState<any>(undefined);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+
+    // Notification State
+    const [notification, setNotification] = useState<{
+        isVisible: boolean;
+        title: string;
+        message: string;
+        type: 'success' | 'error' | 'info';
+    }>({
+        isVisible: false,
+        title: '',
+        message: '',
+        type: 'success'
+    });
 
     // Form State
     const [formData, setFormData] = useState<any>({
@@ -61,23 +76,42 @@ export default function JobApplyPage() {
         }
     };
 
+    const showNotification = (title: string, message: string, type: 'success' | 'error' | 'info' = 'success') => {
+        setNotification({
+            isVisible: true,
+            title,
+            message,
+            type
+        });
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!job) return;
         setSubmitting(true);
 
         try {
+            // Get current user session
+            const { data: { user } } = await supabase.auth.getUser();
+
+            if (!user) {
+                showNotification('Authentication Error', 'You must be logged in to apply.', 'error');
+                setSubmitting(false);
+                return;
+            }
+
             let resumeUrl = '';
             if (formData.cvFile) {
                 resumeUrl = await uploadResume(formData.cvFile);
             } else {
-                alert("Please upload a resume");
+                showNotification('Resume Required', 'Please upload your customized resume.', 'error');
                 setSubmitting(false);
                 return;
             }
 
             const applicationPayload = {
                 job_id: job.id,
+                user_id: user.id, // CRITICAL FIX: Include user_id for RLS
                 candidate_name: `${formData.firstName} ${formData.lastName}`,
                 candidate_email: formData.email,
                 candidate_phone: formData.phone,
@@ -88,17 +122,22 @@ export default function JobApplyPage() {
                 portfolio_url: formData.portfolioUrl,
                 github_url: formData.githubProfile,
                 linkedin_url: formData.linkedinProfile,
-                // Store other fields in notes or separate columns if schema allows
-                // For now, mapping main ones
             };
 
             await submitApplication(applicationPayload);
-            alert("Application Submitted Successfully!");
-            navigate('/jobs');
+            showNotification('Application Submitted!', 'Best of luck! You will be redirected shortly.', 'success');
 
-        } catch (error) {
+            setTimeout(() => {
+                navigate('/dashboard');
+            }, 2000);
+
+        } catch (error: any) {
             console.error("Submission failed", error);
-            alert("Failed to submit application");
+            let msg = "Failed to submit application. Please try again.";
+            if (error.code === '42501' || error.message?.includes('row-level security')) {
+                msg = "Permission denied. Ensure you are logged in correctly.";
+            }
+            showNotification('Submission Failed', msg, 'error');
         } finally {
             setSubmitting(false);
         }
@@ -111,6 +150,13 @@ export default function JobApplyPage() {
 
     return (
         <div className="layout-container flex grow flex-col mt-24">
+            <NotificationCard
+                isVisible={notification.isVisible}
+                title={notification.title}
+                message={notification.message}
+                type={notification.type}
+                onClose={() => setNotification(prev => ({ ...prev, isVisible: false }))}
+            />
             <div className="flex flex-1 justify-center py-5 sm:px-6 lg:px-40">
                 <div className="layout-content-container flex w-full max-w-[960px] flex-col flex-1">
                     {/* PageHeading */}

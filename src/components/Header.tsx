@@ -1,10 +1,31 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import { headerLinks } from '../data/navigation';
+import { supabase } from '../lib/supabaseClient';
 
 export default function Header() {
     const [open, setOpen] = useState(false);
+    const [user, setUser] = useState<any>(null);
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        // Get initial session
+        supabase.auth.getUser().then(({ data: { user } }) => {
+            setUser(user);
+            if (user) fetchProfile(user.id);
+        });
+
+        // Listen for changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            setUser(session?.user ?? null);
+            if (session?.user) fetchProfile(session.user.id);
+            else setAvatarUrl(null);
+        });
+
+        return () => subscription.unsubscribe();
+    }, []);
 
     useEffect(() => {
         if (open) {
@@ -17,6 +38,20 @@ export default function Header() {
             document.body.style.overflow = '';
         };
     }, [open]);
+
+    async function fetchProfile(userId: string) {
+        const { data } = await supabase.from('profiles').select('avatar_url').eq('id', userId).single();
+        if (data) setAvatarUrl(data.avatar_url);
+    }
+
+    const handleSignOut = async () => {
+        await supabase.auth.signOut();
+        navigate('/');
+        setOpen(false);
+    };
+
+    // Default avatar if none
+    const displayAvatar = avatarUrl || user?.user_metadata?.avatar_url || "https://lh3.googleusercontent.com/aida-public/AB6AXuAcEzavaaHshIObHgA1KqkcwngckSwv5gXXAUaJEIbCZ4vrr_AKgZMn1AXV0j9GHRmrh6-a-bCBZwsp44meQ020dKPqsctCDm_9_Mt-QzS08lBa4o9pDwMh8c_N40rXETD_jw63PBctPaQBHq97fVcemS6liwg7aQe0OS2oINmJuqhoNG7ToFG8beJSBydYI2aQBrZDjE1pc9Su9wD0zEJkt6Q2ud6NSwVvy03KSCEzUqe9i46IC418AAC4nZiO4zMTWSu_VdpGxqIl";
 
     return (
         <header
@@ -58,11 +93,30 @@ export default function Header() {
                             {link.text}
                         </Link>
                     ))}
-                    <Link to="/auth">
-                        <button className="ml-2 rounded-full bg-primary text-white text-[10px] font-bold uppercase tracking-widest px-6 h-9 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center">
-                            Get Started
-                        </button>
-                    </Link>
+
+                    {user ? (
+                        <div className="flex items-center gap-2 ml-2">
+                            <Link to="/dashboard">
+                                <button className="flex items-center gap-2 px-1 py-1 pr-4 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                                    <div className="h-8 w-8 rounded-full overflow-hidden border border-slate-300 dark:border-slate-600">
+                                        <img src={displayAvatar} alt="Profile" className="h-full w-full object-cover" />
+                                    </div>
+                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wide">
+                                        Dashboard
+                                    </span>
+                                </button>
+                            </Link>
+                            <button onClick={handleSignOut} className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-colors" title="Sign Out">
+                                <span className="material-symbols-outlined text-[20px]">logout</span>
+                            </button>
+                        </div>
+                    ) : (
+                        <Link to="/auth">
+                            <button className="ml-2 rounded-full bg-primary text-white text-[10px] font-bold uppercase tracking-widest px-6 h-9 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center">
+                                Get Started
+                            </button>
+                        </Link>
+                    )}
                 </div>
 
                 {/* Mobile Menu Toggle */}
@@ -101,13 +155,34 @@ export default function Header() {
                                 {link.text}
                             </Link>
                         ))}
+                        {user && (
+                            <Link
+                                className={cn(
+                                    'flex items-center w-full h-14 px-6 rounded-xl text-lg font-medium uppercase tracking-widest text-primary hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors'
+                                )}
+                                to="/dashboard"
+                                onClick={() => setOpen(false)}
+                            >
+                                Dashboard
+                            </Link>
+                        )}
                     </div>
                     <div className="flex flex-col gap-4 mt-6">
-                        <Link to="/auth" onClick={() => setOpen(false)}>
-                            <button className="w-full h-14 bg-primary text-white text-xs font-bold uppercase tracking-widest rounded-xl shadow-md hover:bg-primary/90 transition-all">
-                                Get Started
+                        {user ? (
+                            <button
+                                onClick={handleSignOut}
+                                className="w-full h-14 bg-red-50 text-red-600 text-xs font-bold uppercase tracking-widest rounded-xl shadow-md hover:bg-red-100 transition-all flex items-center justify-center gap-2"
+                            >
+                                <span className="material-symbols-outlined">logout</span>
+                                Sign Out
                             </button>
-                        </Link>
+                        ) : (
+                            <Link to="/auth" onClick={() => setOpen(false)}>
+                                <button className="w-full h-14 bg-primary text-white text-xs font-bold uppercase tracking-widest rounded-xl shadow-md hover:bg-primary/90 transition-all">
+                                    Get Started
+                                </button>
+                            </Link>
+                        )}
                     </div>
                 </div>
             </div>

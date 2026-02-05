@@ -22,6 +22,14 @@ export default function JobsPage() {
     useEffect(() => {
         async function loadJobs() {
             try {
+                // Parse URL params
+                const params = new URLSearchParams(window.location.search);
+                const q = params.get('q');
+                const loc = params.get('loc');
+
+                if (q) setSearchQuery(q);
+                if (loc) setLocationQuery(loc);
+
                 const data = await fetchJobs();
                 if (data) setAllJobs(data);
             } catch (err) {
@@ -117,7 +125,7 @@ export default function JobsPage() {
     if (loading) return <div className="p-20 text-center">Loading Jobs...</div>;
 
     return (
-        <div className="px-4 md:px-10 lg:px-40 flex flex-1 justify-center py-8">
+        <div className="px-4 md:px-10 lg:px-40 flex flex-1 justify-center py-8 mt-20">
             <div className="layout-content-container flex flex-col w-full max-w-[1280px] flex-1">
                 <JobSearch
                     searchQuery={searchQuery}

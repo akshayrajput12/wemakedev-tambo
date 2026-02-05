@@ -35,7 +35,7 @@ export default function AuthPage() {
                     if (profile?.is_admin) {
                         navigate('/admin');
                     } else {
-                        navigate('/');
+                        navigate('/dashboard');
                     }
                 }
             } else {
@@ -53,7 +53,7 @@ export default function AuthPage() {
                 if (data.user) {
                     // Auto-login or show processing message
                     // For now, let's assume auto-login or redirect
-                    navigate('/');
+                    navigate('/dashboard');
                 }
             }
         } catch (err: any) {

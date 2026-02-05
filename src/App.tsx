@@ -25,8 +25,8 @@ function HomePage() {
       <Hero />
       <Stats />
       <TrustedBy />
-      <HowItWorks />
       <FeaturedJobs />
+      <HowItWorks />
       <Testimonials />
       <CallToAction />
     </>
@@ -41,9 +41,15 @@ function PublicLayout() {
   );
 }
 
+import UserDashboardPage from './pages/UserDashboardPage';
+import ScrollToTop from './components/ScrollToTop';
+import UserProfilePage from './pages/UserProfilePage';
+import UserApplicationDetailPage from './pages/UserApplicationDetailPage';
+
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <Routes>
         {/* Public Routes */}
         <Route element={<PublicLayout />}>
@@ -52,6 +58,9 @@ function App() {
           <Route path="/jobs/:slug" element={<JobDetailPage />} />
           <Route path="/jobs/:slug/apply" element={<JobApplyPage />} />
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/dashboard" element={<UserDashboardPage />} />
+          <Route path="/dashboard/applications/:id" element={<UserApplicationDetailPage />} />
+          <Route path="/profile" element={<UserProfilePage />} />
         </Route>
 
         {/* Admin Routes */}

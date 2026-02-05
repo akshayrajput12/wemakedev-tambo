@@ -1,12 +1,15 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 export default function FeaturedJobs() {
     const [featuredJobs, setFeaturedJobs] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+
+    // Auto-scroll logic
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const [isHovered, setIsHovered] = useState(false);
 
     useEffect(() => {
         async function loadFeaturedJobs() {
@@ -28,10 +31,69 @@ export default function FeaturedJobs() {
         loadFeaturedJobs();
     }, []);
 
+    useEffect(() => {
+        const scrollContainer = scrollContainerRef.current;
+        if (!scrollContainer || isHovered) return;
+
+        const scrollSpeed = 1; // Pixels per frame
+        let animationFrameId: number;
+
+        const scroll = () => {
+            // If scrolled to the end (or near end), loop back seamlessly if possible. 
+            // For simple scroll reset:
+            if (scrollContainer.scrollLeft >= (scrollContainer.scrollWidth / 2)) {
+                // precise reset point depends on implementation. 
+                // Since we duplicate the list, resetting to 0 when we reach halfway is a common trick 
+                // BUT only if scrollWidth is exactly double. 
+                // Because we triple the list, we can reset when we reach 1/3 or 2/3.
+                // Let's rely on a simpler 'scroll and bounce' or 'infinite loop' logic if the list is long enough.
+                // Given the complexity of perfect seamless loop in React without a library, 
+                // a simple continuous scroll that wraps is best done if we have enough content.
+                // For now, I'll use a simple continuous scroll that resets to 0 when it hits the "end" of the first set.
+                // Resetting logic:
+                if (scrollContainer.scrollLeft >= scrollContainer.scrollWidth / 3 * 2) {
+                    scrollContainer.scrollLeft = scrollContainer.scrollWidth / 3;
+                } else {
+                    scrollContainer.scrollLeft += scrollSpeed;
+                }
+            } else {
+                scrollContainer.scrollLeft += scrollSpeed;
+            }
+            animationFrameId = requestAnimationFrame(scroll);
+        };
+
+        animationFrameId = requestAnimationFrame(scroll);
+
+        return () => cancelAnimationFrame(animationFrameId);
+    }, [isHovered, featuredJobs]);
+
+    const getTimeAgo = (dateString: string) => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+        let interval = seconds / 31536000;
+        if (interval > 1) return Math.floor(interval) + "Y AGO";
+
+        interval = seconds / 2592000;
+        if (interval > 1) return Math.floor(interval) + "M AGO";
+
+        interval = seconds / 86400;
+        if (interval > 1) return Math.floor(interval) + "D AGO";
+
+        interval = seconds / 3600;
+        if (interval > 1) return Math.floor(interval) + "H AGO";
+
+        interval = seconds / 60;
+        if (interval > 1) return Math.floor(interval) + "M AGO";
+
+        return "JUST NOW";
+    };
+
     const scroll = (direction: 'left' | 'right') => {
         if (scrollContainerRef.current) {
             const { current } = scrollContainerRef;
-            const scrollAmount = direction === 'left' ? -420 : 420;
+            const scrollAmount = direction === 'left' ? -340 : 340;
             current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
         }
     };
@@ -39,120 +101,115 @@ export default function FeaturedJobs() {
     if (loading) return null;
     if (featuredJobs.length === 0) return null;
 
+    // Duplicate jobs for infinite scroll effect (Triple ensures smooth reset)
+    const displayJobs = [...featuredJobs, ...featuredJobs, ...featuredJobs, ...featuredJobs];
+
     return (
-        <section className="relative w-full py-20 bg-[#101922] overflow-hidden selection:bg-primary selection:text-white">
-            {/* Background Noise/Grid */}
-            <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#333 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+        <section className="relative w-full overflow-hidden py-32 bg-[#F9FAFB]">
+            {/* Background Effects */}
+            <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
+                <div className="absolute -top-[10%] -left-[10%] size-[800px] bg-[radial-gradient(circle_at_center,rgba(10,102,194,0.05)_0%,transparent_70%)] opacity-50"></div>
+                <div className="absolute -bottom-[10%] -right-[10%] size-[800px] bg-[radial-gradient(circle_at_center,rgba(10,102,194,0.05)_0%,transparent_70%)] opacity-30"></div>
+            </div>
+            <div className="absolute inset-0 bg-[radial-gradient(#E5E7EB_1px,transparent_1px)] [background-size:40px_40px] opacity-50 pointer-events-none"></div>
 
-            {/* Ambient Glows - aligned with primary */}
-            <div className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-primary/10 rounded-full blur-[100px] pointer-events-none"></div>
-            <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-primary/10 rounded-full blur-[100px] pointer-events-none"></div>
-
-            <div className="relative z-10 w-full max-w-[1280px] mx-auto px-6 lg:px-12">
-                <div className="flex flex-col md:flex-row items-end justify-between mb-12 gap-8">
+            <div className="relative z-10 mx-auto max-w-[1440px] px-6 lg:px-20">
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row items-end justify-between mb-20 gap-8">
                     <div className="max-w-2xl">
-                        <motion.span
-                            initial={{ opacity: 0, y: 10 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            className="inline-block px-3 py-1 mb-3 text-[10px] font-mono font-bold uppercase tracking-widest text-primary border border-primary/30 rounded-full bg-primary/10"
-                        >
-                            Hot Drops
-                        </motion.span>
-                        <motion.h2
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: 0.1 }}
-                            className="text-4xl md:text-5xl font-black text-white tracking-tighter leading-tight"
-                        >
-                            FEATURED <br className="hidden md:block" />
-                            <span className="text-primary">POSITIONS.</span>
-                        </motion.h2>
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/5 border border-primary/10 text-primary text-[11px] font-bold mb-6 tracking-widest uppercase">
+                            <span className="size-1.5 rounded-full bg-primary animate-pulse"></span>
+                            Premium Curation
+                        </div>
+                        <h2 className="text-5xl lg:text-6xl font-black text-[#111827] tracking-tighter leading-[0.95]">
+                            Featured <br /> <span className="text-primary">Opportunities</span>
+                        </h2>
+                        <p className="mt-8 text-[#6B7280] text-xl leading-relaxed max-w-xl font-light">
+                            Hand-picked roles from industry-leading companies vetted by our expert talent acquisition team.
+                        </p>
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <button onClick={() => scroll('left')} className="group size-12 rounded-full border border-white/10 bg-white/5 hover:bg-white hover:text-black text-white flex items-center justify-center transition-all duration-300">
+                        <button onClick={() => scroll('left')} className="group size-12 rounded-full border border-[#E5E7EB] bg-white hover:bg-primary hover:border-primary hover:text-white flex items-center justify-center transition-all duration-300">
                             <span className="material-symbols-outlined text-xl group-hover:-translate-x-1 transition-transform">arrow_back</span>
                         </button>
-                        <button onClick={() => scroll('right')} className="group size-12 rounded-full border border-white/10 bg-white/5 hover:bg-white hover:text-black text-white flex items-center justify-center transition-all duration-300">
+                        <button onClick={() => scroll('right')} className="group size-12 rounded-full border border-[#E5E7EB] bg-white hover:bg-primary hover:border-primary hover:text-white flex items-center justify-center transition-all duration-300">
                             <span className="material-symbols-outlined text-xl group-hover:translate-x-1 transition-transform">arrow_forward</span>
                         </button>
                     </div>
                 </div>
 
+                {/* Jobs Carousel */}
                 <div
                     ref={scrollContainerRef}
-                    className="flex gap-5 overflow-x-auto pb-8 -mx-6 px-6 snap-x snap-mandatory scrollbar-none"
+                    className="flex gap-8 overflow-x-auto pb-12 -mx-6 px-6 scrollbar-none"
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                    onMouseEnter={() => setIsHovered(true)}
+                    onMouseLeave={() => setIsHovered(false)}
                 >
-                    {featuredJobs.map((job, index) => (
-                        <motion.div
-                            key={job.id}
-                            className="snap-start shrink-0"
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            whileInView={{ opacity: 1, scale: 1 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.4, delay: index * 0.05 }}
-                        >
-                            <Link
-                                to={`/jobs/${job.slug}`}
-                                className="group relative block w-[280px] md:w-[320px] h-[380px] bg-[#111827] rounded-3xl border border-white/10 overflow-hidden hover:border-primary/50 transition-colors duration-500"
-                            >
-                                {/* Gradient Hover Effect */}
-                                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    {displayJobs.map((job, index) => (
+                        <div key={`${job.id}-${index}`} className="group relative shrink-0 w-[340px] bg-white border border-primary/30 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05),0_4px_6px_-4px_rgba(0,0,0,0.05)] transition-all duration-500 hover:shadow-[0_20px_40px_-15px_rgba(10,102,194,0.1)] hover:border-primary hover:-translate-y-1 rounded-[2rem] p-8 flex flex-col">
+                            {/* Card Header */}
+                            <div className="flex justify-between items-start mb-8">
+                                <div className="size-16 rounded-2xl bg-white border border-[#E5E7EB] p-3 flex items-center justify-center overflow-hidden shadow-sm group-hover:scale-110 transition-transform duration-500">
+                                    {job.logo_url ? (
+                                        <img src={job.logo_url} alt={job.company_name} className="w-full h-full object-contain" />
+                                    ) : (
+                                        <span className="text-2xl font-bold text-gray-400">{job.company_name?.charAt(0)}</span>
+                                    )}
+                                </div>
+                                {new Date(job.posted_at).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000 ? (
+                                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 border border-red-100 text-red-600 text-[10px] font-black uppercase tracking-widest">
+                                        <span className="material-symbols-outlined text-xs">local_fire_department</span>
+                                        Hot Drop
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#F9FAFB] border border-[#E5E7EB] text-[#6B7280] text-[10px] font-black uppercase tracking-widest">
+                                        New Post
+                                    </div>
+                                )}
+                            </div>
 
-                                {/* Card Content */}
-                                <div className="absolute inset-0 p-6 flex flex-col justify-between z-10">
-                                    {/* Top Section */}
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <span className="text-primary font-mono text-[10px] uppercase tracking-widest font-bold">{job.company_name}</span>
+                                    <span className="text-[#E5E7EB]">•</span>
+                                    <span className="text-[#6B7280] text-[10px] font-mono">{getTimeAgo(job.posted_at)}</span>
+                                </div>
+                                <h3 className="text-2xl font-bold text-[#111827] group-hover:text-primary transition-colors leading-tight line-clamp-2">
+                                    {job.title}
+                                </h3>
+
+                                <div className="mt-8 grid grid-cols-2 gap-4 border-y border-[#E5E7EB] py-6">
                                     <div>
-                                        <div className="flex justify-between items-start mb-6">
-                                            <div className="size-12 rounded-xl bg-white/5 border border-white/10 p-2.5 flex items-center justify-center group-hover:bg-white group-hover:scale-110 transition-all duration-500">
-                                                {job.logo_url ? (
-                                                    <img src={job.logo_url} alt={job.company_name} className="w-full h-full object-contain filter grayscale group-hover:grayscale-0 transition-all duration-500" />
-                                                ) : (
-                                                    <span className="text-lg font-bold text-white group-hover:text-black">{job.company_name.charAt(0)}</span>
-                                                )}
-                                            </div>
-                                            <div className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-mono font-medium text-white/70 backdrop-blur-sm group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all duration-300">
-                                                {job.type}
-                                            </div>
-                                        </div>
-
-                                        <h3 className="text-lg font-bold text-white leading-tight mb-1.5 group-hover:text-primary transition-colors duration-300 line-clamp-2">
-                                            {job.title}
-                                        </h3>
-                                        <p className="text-white/50 font-medium text-xs">{job.company_name}</p>
+                                        <span className="text-[10px] uppercase tracking-wider text-[#6B7280] font-mono mb-1 block">Salary</span>
+                                        <span className="text-sm font-bold text-[#111827]">{job.salary_range}</span>
                                     </div>
-
-                                    {/* Middle Section - Stats */}
-                                    <div className="space-y-2">
-                                        <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/5 border border-white/5 group-hover:border-white/10 transition-all">
-                                            <span className="text-[10px] text-white/40 uppercase tracking-wider font-mono">Salary</span>
-                                            <span className="text-xs font-bold text-white">{job.salary_range}</span>
-                                        </div>
-                                        <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/5 border border-white/5 group-hover:border-white/10 transition-all">
-                                            <span className="text-[10px] text-white/40 uppercase tracking-wider font-mono">Exp.</span>
-                                            <span className="text-xs font-bold text-white">{job.level || 'Mid-Senior'}</span>
-                                        </div>
-                                        <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/5 border border-white/5 group-hover:border-white/10 transition-all">
-                                            <span className="text-[10px] text-white/40 uppercase tracking-wider font-mono">Loc.</span>
-                                            <span className="text-xs font-bold text-white truncate max-w-[120px] text-right">{job.location}</span>
-                                        </div>
-                                    </div>
-
-                                    {/* Bottom - Action */}
-                                    <div className="flex items-center gap-2 pt-4 mt-1 border-t border-white/5">
-                                        <span className="flex-1 h-10 rounded-full bg-white text-black text-sm font-bold flex items-center justify-center origin-left scale-x-95 group-hover:scale-x-100 group-hover:bg-primary group-hover:text-white transition-all duration-300">
-                                            Apply Now
-                                        </span>
-                                        <span className="size-10 rounded-full bg-white/10 flex items-center justify-center text-white group-hover:bg-primary group-hover:text-white group-hover:-rotate-45 transition-all duration-300">
-                                            <span className="material-symbols-outlined text-lg">arrow_outward</span>
-                                        </span>
+                                    <div>
+                                        <span className="text-[10px] uppercase tracking-wider text-[#6B7280] font-mono mb-1 block">Loc.</span>
+                                        <span className="text-sm font-bold text-[#111827] truncate block">{job.location}</span>
                                     </div>
                                 </div>
-                            </Link>
-                        </motion.div>
+
+                                <div className="mt-6 flex flex-wrap gap-2">
+                                    <span className="px-3 py-1 rounded-lg bg-[#F9FAFB] border border-[#E5E7EB] text-[10px] font-bold text-[#6B7280] uppercase tracking-tighter">
+                                        {job.type}
+                                    </span>
+                                    <span className="px-3 py-1 rounded-lg bg-[#F9FAFB] border border-[#E5E7EB] text-[10px] font-bold text-[#6B7280] uppercase tracking-tighter">
+                                        {job.experience_level || job.level || 'Mid'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="mt-10">
+                                <Link to={`/jobs/${job.slug}`} className="relative flex items-center justify-between w-full bg-primary text-white px-6 py-4 rounded-xl font-bold transition-all duration-500 hover:bg-[#004182] hover:scale-[1.01] active:scale-95 shadow-lg shadow-primary/20 group/btn">
+                                    Apply Now
+                                    <div className="flex items-center justify-center size-8 rounded-full bg-white/20 text-white transition-transform duration-500 group-hover/btn:rotate-[-45deg] group-hover/btn:bg-white group-hover/btn:text-primary">
+                                        <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                                    </div>
+                                </Link>
+                            </div>
+                        </div>
                     ))}
                 </div>
             </div>

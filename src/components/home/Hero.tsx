@@ -1,6 +1,22 @@
-
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Hero() {
+    const navigate = useNavigate();
+    const [searchQuery, setSearchQuery] = useState('');
+    const [locationQuery, setLocationQuery] = useState('');
+
+    const handleSearch = () => {
+        const params = new URLSearchParams();
+        if (searchQuery) params.append('q', searchQuery);
+        if (locationQuery) params.append('loc', locationQuery);
+        navigate(`/jobs?${params.toString()}`);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') handleSearch();
+    };
+
     return (
         <div className="relative w-full bg-slate-dark text-white">
             <div className="absolute inset-0 z-0 opacity-20 bg-[url('https://images.unsplash.com/photo-1497215728101-856f4ea42174?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center" data-alt="Office environment with people working on laptops"></div>
@@ -16,23 +32,40 @@ export default function Hero() {
                     <div className="flex flex-col sm:flex-row gap-2">
                         <div className="flex flex-1 items-center px-4 py-3 sm:border-r border-gray-200 dark:border-gray-700">
                             <span className="material-symbols-outlined text-gray-400 mr-3">search</span>
-                            <input className="w-full bg-transparent border-none p-0 text-slate-dark dark:text-white placeholder-gray-400 focus:ring-0 text-base" placeholder="Job title, keywords, or company" type="text" />
+                            <input
+                                className="w-full bg-transparent border-none p-0 text-slate-dark dark:text-white placeholder-gray-400 focus:ring-0 text-base"
+                                placeholder="Job title, keywords, or company"
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                            />
                         </div>
                         <div className="flex flex-1 items-center px-4 py-3">
                             <span className="material-symbols-outlined text-gray-400 mr-3">location_on</span>
-                            <input className="w-full bg-transparent border-none p-0 text-slate-dark dark:text-white placeholder-gray-400 focus:ring-0 text-base" placeholder="City, state, or remote" type="text" />
+                            <input
+                                className="w-full bg-transparent border-none p-0 text-slate-dark dark:text-white placeholder-gray-400 focus:ring-0 text-base"
+                                placeholder="City, state, or remote"
+                                type="text"
+                                value={locationQuery}
+                                onChange={(e) => setLocationQuery(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                            />
                         </div>
-                        <button className="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-lg text-base font-bold transition-all w-full sm:w-auto">
+                        <button
+                            onClick={handleSearch}
+                            className="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-lg text-base font-bold transition-all w-full sm:w-auto"
+                        >
                             Search
                         </button>
                     </div>
                 </div>
                 <div className="mt-8 flex gap-4 text-sm text-gray-400">
                     <span>Popular:</span>
-                    <a className="hover:text-white underline decoration-dotted" href="#">Designer</a>
-                    <a className="hover:text-white underline decoration-dotted" href="#">Developer</a>
-                    <a className="hover:text-white underline decoration-dotted" href="#">Marketing</a>
-                    <a className="hover:text-white underline decoration-dotted" href="#">Project Manager</a>
+                    <button onClick={() => navigate('/jobs?q=Designer')} className="hover:text-white underline decoration-dotted bg-transparent border-none p-0 cursor-pointer">Designer</button>
+                    <button onClick={() => navigate('/jobs?q=Developer')} className="hover:text-white underline decoration-dotted bg-transparent border-none p-0 cursor-pointer">Developer</button>
+                    <button onClick={() => navigate('/jobs?q=Marketing')} className="hover:text-white underline decoration-dotted bg-transparent border-none p-0 cursor-pointer">Marketing</button>
+                    <button onClick={() => navigate('/jobs?q=Project Manager')} className="hover:text-white underline decoration-dotted bg-transparent border-none p-0 cursor-pointer">Project Manager</button>
                 </div>
             </div>
         </div>
