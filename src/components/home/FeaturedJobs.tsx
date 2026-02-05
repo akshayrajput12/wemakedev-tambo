@@ -115,21 +115,21 @@ export default function FeaturedJobs() {
 
             <div className="relative z-10 mx-auto max-w-[1440px] px-6 lg:px-20">
                 {/* Header Section */}
-                <div className="flex flex-col md:flex-row items-end justify-between mb-20 gap-8">
+                <div className="flex flex-col md:flex-row items-end justify-between mb-12 sm:mb-20 gap-8">
                     <div className="max-w-2xl">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/5 border border-primary/10 text-primary text-[11px] font-bold mb-6 tracking-widest uppercase">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/5 border border-primary/10 text-primary text-[11px] font-bold mb-4 sm:mb-6 tracking-widest uppercase">
                             <span className="size-1.5 rounded-full bg-primary animate-pulse"></span>
                             Premium Curation
                         </div>
-                        <h2 className="text-5xl lg:text-6xl font-black text-[#111827] tracking-tighter leading-[0.95]">
-                            Featured <br /> <span className="text-primary">Opportunities</span>
+                        <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-[#111827] tracking-tighter leading-[0.95] mb-4 sm:mb-0">
+                            Featured <br className="hidden sm:block" /> <span className="text-primary">Opportunities</span>
                         </h2>
-                        <p className="mt-8 text-[#6B7280] text-xl leading-relaxed max-w-xl font-light">
+                        <p className="mt-4 sm:mt-8 text-[#6B7280] text-lg sm:text-xl leading-relaxed max-w-xl font-light">
                             Hand-picked roles from industry-leading companies vetted by our expert talent acquisition team.
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 self-end sm:self-auto">
                         <button onClick={() => scroll('left')} className="group size-12 rounded-full border border-[#E5E7EB] bg-white hover:bg-primary hover:border-primary hover:text-white flex items-center justify-center transition-all duration-300">
                             <span className="material-symbols-outlined text-xl group-hover:-translate-x-1 transition-transform">arrow_back</span>
                         </button>
@@ -148,7 +148,7 @@ export default function FeaturedJobs() {
                     onMouseLeave={() => setIsHovered(false)}
                 >
                     {displayJobs.map((job, index) => (
-                        <div key={`${job.id}-${index}`} className="group relative shrink-0 w-[340px] bg-white border border-primary/30 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05),0_4px_6px_-4px_rgba(0,0,0,0.05)] transition-all duration-500 hover:shadow-[0_20px_40px_-15px_rgba(10,102,194,0.1)] hover:border-primary hover:-translate-y-1 rounded-[2rem] p-8 flex flex-col">
+                        <div key={`${job.id}-${index}`} className="group relative shrink-0 w-[280px] sm:w-[340px] bg-white border border-primary/30 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05),0_4px_6px_-4px_rgba(0,0,0,0.05)] transition-all duration-500 hover:shadow-[0_20px_40px_-15px_rgba(10,102,194,0.1)] hover:border-primary hover:-translate-y-1 rounded-[2rem] p-6 sm:p-8 flex flex-col">
                             {/* Card Header */}
                             <div className="flex justify-between items-start mb-8">
                                 <div className="size-16 rounded-2xl bg-white border border-[#E5E7EB] p-3 flex items-center justify-center overflow-hidden shadow-sm group-hover:scale-110 transition-transform duration-500">
