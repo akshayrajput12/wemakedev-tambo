@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 
 interface NotificationCardProps {
     title: string;
@@ -41,8 +41,8 @@ export default function NotificationCard({ title, message, type = 'success', isV
                 >
                     <div className={`pointer-events-auto bg-white dark:bg-zinc-900 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-100 dark:border-zinc-800 p-5 w-80 flex items-start gap-4 backdrop-blur-sm`}>
                         <div className={`shrink-0 size-10 rounded-full flex items-center justify-center ${type === 'success' ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-500' :
-                                type === 'error' ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-500' :
-                                    'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-500'
+                            type === 'error' ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-500' :
+                                'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-500'
                             }`}>
                             <span className="material-symbols-outlined text-[24px]">
                                 {type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'info'}

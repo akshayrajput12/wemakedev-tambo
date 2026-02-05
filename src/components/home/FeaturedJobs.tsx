@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
-import { motion } from 'framer-motion';
+
 
 export default function FeaturedJobs() {
     const [featuredJobs, setFeaturedJobs] = useState<any[]>([]);

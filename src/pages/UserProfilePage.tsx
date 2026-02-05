@@ -25,7 +25,6 @@ export default function UserProfilePage() {
     // Form state
     const [fullName, setFullName] = useState('');
     const [avatarUrl, setAvatarUrl] = useState('');
-    const [title, setTitle] = useState(''); // Kept for UI state, even if not fully persisted yet if backend lacks column
 
     useEffect(() => {
         async function loadProfile() {
@@ -43,7 +42,6 @@ export default function UserProfilePage() {
                         setProfile(data);
                         setFullName(data.full_name || '');
                         setAvatarUrl(data.avatar_url || '');
-                        setTitle(data.title || 'Candidate');
                     }
                 }
             } catch (err) {
