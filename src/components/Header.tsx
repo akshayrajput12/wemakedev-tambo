@@ -8,6 +8,7 @@ export default function Header() {
     const [open, setOpen] = useState(false);
     const [user, setUser] = useState<any>(null);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+    const [isAdmin, setIsAdmin] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -21,7 +22,10 @@ export default function Header() {
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             setUser(session?.user ?? null);
             if (session?.user) fetchProfile(session.user.id);
-            else setAvatarUrl(null);
+            else {
+                setAvatarUrl(null);
+                setIsAdmin(false);
+            }
         });
 
         return () => subscription.unsubscribe();
@@ -40,8 +44,11 @@ export default function Header() {
     }, [open]);
 
     async function fetchProfile(userId: string) {
-        const { data } = await supabase.from('profiles').select('avatar_url').eq('id', userId).single();
-        if (data) setAvatarUrl(data.avatar_url);
+        const { data } = await supabase.from('profiles').select('avatar_url, is_admin').eq('id', userId).single();
+        if (data) {
+            setAvatarUrl(data.avatar_url);
+            setIsAdmin(data.is_admin || false);
+        }
     }
 
     const handleSignOut = async () => {
@@ -96,6 +103,14 @@ export default function Header() {
 
                     {user ? (
                         <div className="flex items-center gap-2 ml-2">
+                            {isAdmin && (
+                                <Link to="/admin">
+                                    <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors shadow-md mr-2">
+                                        <span className="material-symbols-outlined text-[18px]">admin_panel_settings</span>
+                                        <span className="text-xs font-bold uppercase tracking-wide">Admin</span>
+                                    </button>
+                                </Link>
+                            )}
                             <Link to="/dashboard">
                                 <button className="flex items-center gap-2 px-1 py-1 pr-4 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                                     <div className="h-8 w-8 rounded-full overflow-hidden border border-slate-300 dark:border-slate-600">
@@ -164,6 +179,17 @@ export default function Header() {
                                 onClick={() => setOpen(false)}
                             >
                                 Dashboard
+                            </Link>
+                        )}
+                        {isAdmin && (
+                            <Link
+                                className={cn(
+                                    'flex items-center w-full h-14 px-6 rounded-xl text-lg font-medium uppercase tracking-widest text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors'
+                                )}
+                                to="/admin"
+                                onClick={() => setOpen(false)}
+                            >
+                                Admin Panel
                             </Link>
                         )}
                     </div>
