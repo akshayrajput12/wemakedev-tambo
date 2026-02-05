@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #0a66c2;
+  --color-background-light: #f5f7f8;
+  --color-background-dark: #101922;
+  --color-slate-dark: #111827;
+
+  --font-display: "Inter", sans-serif;
+
+  --radius: 0.5rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* CKEditor / Rich Text Styles */
+.ck-editor__editable {
+  min-height: 300px;
+}
+
+.rich-text-editor-wrapper.h-48 .ck-editor__editable {
+  min-height: 12rem !important;
+  height: 12rem !important;
+}
+
+.ck-content h1 {
+  @apply text-2xl font-bold mb-4 mt-6;
+}
+
+.ck-content h2 {
+  @apply text-xl font-bold mb-3 mt-5;
+}
+
+.ck-content h3 {
+  @apply text-lg font-bold mb-2 mt-4;
+}
+
+.ck-content p {
+  @apply mb-4 leading-relaxed;
+}
+
+.ck-content ul {
+  @apply list-disc list-outside ml-5 mb-4 space-y-2;
+}
+
+.ck-content ol {
+  @apply list-decimal list-outside ml-5 mb-4 space-y-2;
+}
+
+.ck-content li {
+  @apply pl-1;
+}
+
+.ck-content a {
+  @apply text-primary hover:underline;
+}
+
+.ck-content blockquote {
+  @apply border-l-4 border-primary pl-4 italic my-4 bg-gray-50 dark:bg-gray-800 p-2 rounded-r;
+}
