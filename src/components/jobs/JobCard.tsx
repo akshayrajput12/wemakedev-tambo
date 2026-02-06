@@ -86,13 +86,10 @@ export default function JobCard({ job }: JobCardProps) {
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
-                        // Bookmark logic
+                        navigate(`/jobs/${job.slug}/apply`);
                     }}
-                    className="size-10 rounded-full bg-slate-50 dark:bg-slate-700/50 text-slate-400 hover:text-primary hover:bg-blue-50 dark:hover:bg-blue-900/30 flex items-center justify-center transition-all"
+                    className="w-full sm:w-auto h-10 px-6 rounded-xl bg-primary text-white text-sm font-bold shadow-md shadow-blue-500/20 hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/30 transition-all flex items-center justify-center"
                 >
-                    <span className="material-symbols-outlined">bookmark_border</span>
-                </button>
-                <button className="w-full sm:w-auto h-10 px-6 rounded-xl bg-primary text-white text-sm font-bold shadow-md shadow-blue-500/20 hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/30 transition-all flex items-center justify-center">
                     Apply
                 </button>
             </div>

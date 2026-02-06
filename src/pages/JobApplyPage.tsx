@@ -35,7 +35,7 @@ export default function JobApplyPage() {
         currentJobTitle: '',
         yearsOfExperience: '',
         highestEducation: '',
-        keySkills: '',
+        keySkills: [], // Changed to array for chips
         linkedinProfile: '',
         githubProfile: '',
         portfolioUrl: '',
@@ -43,6 +43,9 @@ export default function JobApplyPage() {
         noticePeriod: '',
         expectedSalary: ''
     });
+
+    const [skillInput, setSkillInput] = useState('');
+    const [errors, setErrors] = useState<{ [key: string]: string }>({}); // Validation errors
 
     useEffect(() => {
         async function loadJob() {
@@ -85,9 +88,58 @@ export default function JobApplyPage() {
         });
     };
 
+    const validateForm = () => {
+        const newErrors: { [key: string]: string } = {};
+
+        // Phone validation
+        if (!formData.phone || formData.phone.length !== 10) {
+            newErrors.phone = 'Phone number must be exactly 10 digits';
+        }
+
+        // Social Links validation
+        if (!formData.linkedinProfile.trim()) {
+            newErrors.linkedinProfile = 'LinkedIn profile is required';
+        }
+        if (!formData.githubProfile.trim()) {
+            newErrors.githubProfile = 'GitHub profile is required';
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const handleSkillKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (skillInput.trim()) {
+                if (!formData.keySkills.includes(skillInput.trim())) {
+                    setFormData((prev: any) => ({
+                        ...prev,
+                        keySkills: [...prev.keySkills, skillInput.trim()]
+                    }));
+                }
+                setSkillInput('');
+            }
+        }
+    };
+
+    const removeSkill = (skillToRemove: string) => {
+        setFormData((prev: any) => ({
+            ...prev,
+            keySkills: prev.keySkills.filter((skill: string) => skill !== skillToRemove)
+        }));
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!job) return;
+
+        if (!validateForm()) {
+            showNotification('Validation Error', 'Please check the form for errors.', 'error');
+            // Scroll to top or first error could be good, but for now just show notification
+            return;
+        }
+
         setSubmitting(true);
 
         try {
@@ -114,9 +166,9 @@ export default function JobApplyPage() {
                 user_id: user.id, // CRITICAL FIX: Include user_id for RLS
                 candidate_name: `${formData.firstName} ${formData.lastName}`,
                 candidate_email: formData.email,
-                candidate_phone: formData.phone,
+                candidate_phone: `+91${formData.phone}`, // Add prefix
                 candidate_location: formData.location,
-                experience_summary: `${formData.yearsOfExperience} years`,
+                experience_summary: `${formData.yearsOfExperience} years. Skills: ${formData.keySkills.join(', ')}`,
                 resume_url: resumeUrl,
                 expected_salary: formData.expectedSalary,
                 portfolio_url: formData.portfolioUrl,
@@ -253,18 +305,25 @@ export default function JobApplyPage() {
                                     </div>
                                 </label>
                                 <label className="flex flex-col gap-2">
-                                    <span className="text-sm font-medium text-slate-900 dark:text-slate-200">Phone Number</span>
+                                    <span className="text-sm font-medium text-slate-900 dark:text-slate-200">Phone Number <span className="text-red-500">*</span></span>
                                     <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[20px]">call</span>
+                                        <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center bg-slate-100 dark:bg-[#202e3d] rounded-l-xl px-3 border border-r-0 border-slate-200 dark:border-slate-700">
+                                            <span className="text-slate-500 dark:text-slate-400 font-medium">+91</span>
+                                        </div>
                                         <input
                                             name="phone"
                                             value={formData.phone}
-                                            onChange={handleInputChange}
-                                            className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-base text-slate-900 focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-[#1A2633] dark:text-white dark:placeholder-slate-500"
-                                            placeholder="+1 (555) 000-0000"
+                                            onChange={(e) => {
+                                                const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                                setFormData((prev: any) => ({ ...prev, phone: val }));
+                                                if (errors.phone) setErrors(prev => ({ ...prev, phone: '' }));
+                                            }}
+                                            className={`h-12 w-full rounded-xl border bg-slate-50 pl-[4.5rem] pr-4 text-base text-slate-900 focus:ring-primary dark:bg-[#1A2633] dark:text-white dark:placeholder-slate-500 ${errors.phone ? 'border-red-500 focus:border-red-500' : 'border-slate-200 focus:border-primary dark:border-slate-700'}`}
+                                            placeholder="9999999999"
                                             type="tel"
                                         />
                                     </div>
+                                    {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
                                 </label>
                                 <label className="flex flex-col gap-2 md:col-span-2">
                                     <span className="text-sm font-medium text-slate-900 dark:text-slate-200">Current Location</span>
@@ -364,14 +423,30 @@ export default function JobApplyPage() {
                                     </select>
                                 </label>
                                 <label className="flex flex-col gap-2 md:col-span-2">
-                                    <span className="text-sm font-medium text-slate-900 dark:text-slate-200">Key Skills</span>
-                                    <textarea
-                                        name="keySkills"
-                                        value={formData.keySkills}
-                                        onChange={handleInputChange}
-                                        className="h-24 w-full rounded-xl border border-slate-200 bg-slate-50 p-4 text-base text-slate-900 focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-[#1A2633] dark:text-white dark:placeholder-slate-500"
-                                        placeholder="e.g. React, TypeScript, Tailwind CSS, Figma (comma separated)"
-                                    ></textarea>
+                                    <span className="text-sm font-medium text-slate-900 dark:text-slate-200">Key Skills (Press Enter to add)</span>
+                                    <div className="min-h-24 w-full rounded-xl border border-slate-200 bg-slate-50 p-2 text-base text-slate-900 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary dark:border-slate-700 dark:bg-[#1A2633] dark:text-white flex flex-wrap gap-2 content-start">
+                                        {formData.keySkills.map((skill: string, index: number) => (
+                                            <div key={index} className="flex items-center gap-1 bg-white dark:bg-slate-700 px-3 py-1.5 rounded-lg shadow-sm border border-slate-200 dark:border-slate-600">
+                                                <span className="text-sm font-medium">{skill}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeSkill(skill)}
+                                                    className="size-5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-600 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"
+                                                >
+                                                    <span className="material-symbols-outlined text-[16px]">close</span>
+                                                </button>
+                                            </div>
+                                        ))}
+                                        <input
+                                            value={skillInput}
+                                            onChange={(e) => setSkillInput(e.target.value)}
+                                            onKeyDown={handleSkillKeyDown}
+                                            className="flex-1 min-w-[120px] bg-transparent border-none outline-none focus:ring-0 p-2 placeholder-slate-400"
+                                            placeholder="Type skill & press Enter..."
+                                            type="text"
+                                        />
+                                    </div>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">Type a skill and press Enter to add. Click '×' to remove.</p>
                                 </label>
                             </div>
                         </div>
@@ -384,35 +459,43 @@ export default function JobApplyPage() {
                             </h3>
                             <div className="grid grid-cols-1 gap-6">
                                 <label className="flex flex-col gap-2">
-                                    <span className="text-sm font-medium text-slate-900 dark:text-slate-200">LinkedIn Profile</span>
+                                    <span className="text-sm font-medium text-slate-900 dark:text-slate-200">LinkedIn Profile <span className="text-red-500">*</span></span>
                                     <div className="flex">
                                         <span className="inline-flex items-center rounded-l-xl border border-r-0 border-slate-200 bg-slate-100 px-4 text-slate-500 dark:border-slate-700 dark:bg-[#202e3d] dark:text-slate-400">linkedin.com/in/</span>
                                         <input
                                             name="linkedinProfile"
                                             value={formData.linkedinProfile}
-                                            onChange={handleInputChange}
-                                            className="h-12 w-full rounded-r-xl border border-slate-200 bg-slate-50 px-4 text-base text-slate-900 focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-[#1A2633] dark:text-white"
+                                            onChange={(e) => {
+                                                handleInputChange(e);
+                                                if (errors.linkedinProfile && e.target.value) setErrors(prev => ({ ...prev, linkedinProfile: '' }));
+                                            }}
+                                            className={`h-12 w-full rounded-r-xl border bg-slate-50 px-4 text-base text-slate-900 focus:ring-primary dark:bg-[#1A2633] dark:text-white ${errors.linkedinProfile ? 'border-red-500 focus:border-red-500' : 'border-slate-200 focus:border-primary dark:border-slate-700'}`}
                                             placeholder="username"
                                             type="text"
                                         />
                                     </div>
+                                    {errors.linkedinProfile && <p className="text-xs text-red-500">{errors.linkedinProfile}</p>}
                                 </label>
                                 <label className="flex flex-col gap-2">
-                                    <span className="text-sm font-medium text-slate-900 dark:text-slate-200">GitHub Profile</span>
+                                    <span className="text-sm font-medium text-slate-900 dark:text-slate-200">GitHub Profile <span className="text-red-500">*</span></span>
                                     <div className="flex">
                                         <span className="inline-flex items-center rounded-l-xl border border-r-0 border-slate-200 bg-slate-100 px-4 text-slate-500 dark:border-slate-700 dark:bg-[#202e3d] dark:text-slate-400">github.com/</span>
                                         <input
                                             name="githubProfile"
                                             value={formData.githubProfile}
-                                            onChange={handleInputChange}
-                                            className="h-12 w-full rounded-r-xl border border-slate-200 bg-slate-50 px-4 text-base text-slate-900 focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-[#1A2633] dark:text-white"
+                                            onChange={(e) => {
+                                                handleInputChange(e);
+                                                if (errors.githubProfile && e.target.value) setErrors(prev => ({ ...prev, githubProfile: '' }));
+                                            }}
+                                            className={`h-12 w-full rounded-r-xl border bg-slate-50 px-4 text-base text-slate-900 focus:ring-primary dark:bg-[#1A2633] dark:text-white ${errors.githubProfile ? 'border-red-500 focus:border-red-500' : 'border-slate-200 focus:border-primary dark:border-slate-700'}`}
                                             placeholder="username"
                                             type="text"
                                         />
                                     </div>
+                                    {errors.githubProfile && <p className="text-xs text-red-500">{errors.githubProfile}</p>}
                                 </label>
                                 <label className="flex flex-col gap-2">
-                                    <span className="text-sm font-medium text-slate-900 dark:text-slate-200">Portfolio URL</span>
+                                    <span className="text-sm font-medium text-slate-900 dark:text-slate-200">Portfolio URL <span className="text-slate-400 font-normal">(Optional)</span></span>
                                     <div className="relative">
                                         <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[20px]">language</span>
                                         <input
