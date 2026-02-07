@@ -79,8 +79,8 @@ export default function Header() {
                     className="flex items-center gap-4 group cursor-pointer"
                     onClick={() => setOpen(false)}
                 >
-                    <div className="w-12 h-12 flex items-center bg-primary rounded-full justify-center group-hover:scale-105 transition-transform duration-300 shadow-lg shadow-primary/20">
-                        <span className="material-symbols-outlined text-white text-2xl">work</span>
+                    <div className="w-12 h-12 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+                        <img src="/logo.png" alt="TCD Logo" className="w-full h-full object-contain" />
                     </div>
                     <span className="text-sm font-black tracking-widest uppercase text-slate-dark dark:text-white hidden sm:block">
                         TCD MultiRecruit

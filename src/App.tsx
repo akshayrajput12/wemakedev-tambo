@@ -10,6 +10,8 @@ import CallToAction from './components/home/CallToAction';
 import JobsPage from './pages/JobsPage';
 import JobDetailPage from './pages/JobDetailPage';
 import JobApplyPage from './pages/JobApplyPage';
+import AboutPage from './pages/AboutPage';
+import ContactPage from './pages/ContactPage';
 import AuthPage from './pages/AuthPage';
 import AdminLayout from './layouts/AdminLayout';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
@@ -61,6 +63,8 @@ function App() {
           <Route path="/dashboard" element={<UserDashboardPage />} />
           <Route path="/dashboard/applications/:id" element={<UserApplicationDetailPage />} />
           <Route path="/profile" element={<UserProfilePage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
         </Route>
 
         {/* Admin Routes */}

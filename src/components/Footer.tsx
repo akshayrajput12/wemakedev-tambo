@@ -3,12 +3,17 @@ import { Linkedin, Twitter, Instagram, MapPin } from "lucide-react";
 
 // TCD Data matching the requested structure
 const footerLinks = {
-    capabilities: ["Find Jobs", "For Employers", "Career Advice", "Consultation"],
+    capabilities: [
+        { label: "Find Jobs", href: "/jobs" },
+        { label: "For Employers", href: "/auth" },
+        { label: "Career Advice", href: "/about" },
+        { label: "Consultation", href: "/contact" }
+    ],
     quickLinks: [
         { label: "About Us", href: "/about" },
-        { label: "Terms of Service", href: "/terms" },
-        { label: "Privacy Policy", href: "/privacy" },
-        { label: "Help Center", href: "/help" }
+        { label: "Terms of Service", href: "#" },
+        { label: "Privacy Policy", href: "#" },
+        { label: "Help Center", href: "/contact" }
     ],
     socials: [
         { label: "LinkedIn", href: "#" },
@@ -19,7 +24,7 @@ const footerLinks = {
 
 const contactDetails = {
     address: "123 Tech Park, Silicon Valley, CA",
-    email: "contact@tcdrecruitment.com",
+    email: "contact@tcdmultirecruit.com",
     phone: "+1 (555) 123-4567"
 };
 
@@ -45,13 +50,13 @@ export default function Footer() {
                             <h4 className="text-[10px] font-bold tracking-[0.3em] uppercase text-white/40 mb-6">Capabilities</h4>
                             <ul className="space-y-4">
                                 {footerLinks.capabilities.map((item) => (
-                                    <li key={item} className="group flex items-center">
+                                    <li key={item.label} className="group flex items-center">
                                         <span className="w-1.5 h-1.5 bg-primary rounded-full mr-3 opacity-0 group-hover:opacity-100 transition-opacity"></span>
                                         <Link
-                                            to="#"
+                                            to={item.href}
                                             className="text-base font-light text-white/80 hover:text-primary transition-colors"
                                         >
-                                            {item}
+                                            {item.label}
                                         </Link>
                                     </li>
                                 ))}
@@ -140,8 +145,11 @@ export default function Footer() {
                 {/* Bottom Bar & Big Logo */}
                 <div className="relative overflow-hidden pt-8 md:pt-12">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center text-white/30 text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-8">
-                        <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 mb-4 md:mb-0">
-                            <span>© 2024 TCD MultiRecruit</span>
+                        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8 mb-4 md:mb-0">
+                            <div className="flex items-center gap-2">
+                                <img src="/logo.png" alt="TCD Logo" className="w-6 h-6 object-contain" />
+                                <span>© 2024 TCD MultiRecruit</span>
+                            </div>
                             <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Protocol</Link>
                             <Link to="#" className="hover:text-primary transition-colors">Terms of Service</Link>
                         </div>

@@ -2,9 +2,8 @@ import type { NavLink, FooterSection } from '../types';
 
 export const headerLinks: NavLink[] = [
     { text: "Find Jobs", href: "/jobs" },
-    { text: "For Employers", href: "/employers" },
-    { text: "Career Advice", href: "/advice" },
-    { text: "About Us", href: "/about" }
+    { text: "About Us", href: "/about" },
+    { text: "Contact", href: "/contact" }
 ];
 
 export const footerSections: FooterSection[] = [
