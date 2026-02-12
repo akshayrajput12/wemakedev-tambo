@@ -1,211 +1,95 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
-import { Phone, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function AuthPage() {
-    const [isLogin, setIsLogin] = useState(true);
-
-    // Auth State
-    const [fullName, setFullName] = useState('');
-    const [phoneNumber, setPhoneNumber] = useState('');
-    const [otp, setOtp] = useState('');
-    const [otpSent, setOtpSent] = useState(false);
-
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const navigate = useNavigate();
 
-    const handleAuth = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleGoogleLogin = async () => {
         setLoading(true);
         setError(null);
-
         try {
-            if (!otpSent) {
-                // Step 1: Send OTP
-                const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+91${phoneNumber}`;
-
-                const { error } = await supabase.auth.signInWithOtp({
-                    phone: formattedPhone,
-                    options: {
-                        data: {
-                            // Only attach metadata on sign up
-                            full_name: !isLogin ? fullName : undefined,
-                        },
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/dashboard`,
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'consent',
                     },
-                });
+                },
+            });
 
-                if (error) throw error;
-                setOtpSent(true);
-            } else {
-                // Step 2: Verify OTP
-                const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+91${phoneNumber}`;
-                const { data, error } = await supabase.auth.verifyOtp({
-                    phone: formattedPhone,
-                    token: otp,
-                    type: 'sms',
-                });
-
-                if (error) throw error;
-
-                if (data.session && data.user) {
-                    await checkUserRole(data.user.id);
-                }
-            }
+            if (error) throw error;
         } catch (err: any) {
-            console.error(err);
-            setError(err.message || 'Authentication failed');
-        } finally {
+            console.error('Google login error:', err);
+            setError(err.message || 'Failed to initiate Google login');
             setLoading(false);
         }
     };
 
-    const checkUserRole = async (userId: string) => {
-        try {
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('is_admin')
-                .eq('id', userId)
-                .single();
-
-            if (profile?.is_admin) {
-                navigate('/admin');
-            } else {
-                navigate('/dashboard');
-            }
-        } catch (error) {
-            // Fallback if profile fetch fails (e.g., first login lag), go to dashboard
-            navigate('/dashboard');
-        }
-    };
-
-    const resetForm = () => {
-        setError(null);
-        setOtpSent(false);
-        setOtp('');
-        // Keep phone number for convenience
-    };
-
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-900 px-4">
-            <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 border border-gray-100 dark:border-slate-700">
-                <div className="text-center mb-8">
-                    <h1 className="text-3xl font-black text-slate-900 dark:text-white">
-                        {isLogin ? 'Welcome Back' : 'Create Account'}
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-900 px-4 relative overflow-hidden">
+            {/* Background Decorations */}
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+                <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary/10 rounded-full blur-[100px] animate-pulse"></div>
+                <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }}></div>
+            </div>
+
+            <div className="w-full max-w-md bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/20 dark:border-slate-700 z-10 animate-in fade-in zoom-in-95 duration-500">
+                <div className="text-center mb-10">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 text-primary mb-6 shadow-sm">
+                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                    </div>
+                    <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                        Welcome Back
                     </h1>
-                    <p className="mt-2 text-slate-500 dark:text-slate-400">
-                        {isLogin ? 'Sign in with your phone number' : 'Join us to find your dream job'}
+                    <p className="mt-3 text-slate-500 dark:text-slate-400 text-lg">
+                        Sign in to continue to your dashboard
                     </p>
                 </div>
 
-                <form onSubmit={handleAuth} className="space-y-4">
+                {error && (
+                    <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm font-medium border border-red-100 dark:border-red-900/30 animate-in fade-in slide-in-from-top-2">
+                        {error}
+                    </div>
+                )}
 
-                    {/* Full Name - Only for Sign Up and if NOT verifying OTP yet */}
-                    {!isLogin && !otpSent && (
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Full Name</label>
-                            <input
-                                type="text"
-                                required={!isLogin}
-                                value={fullName}
-                                onChange={(e) => setFullName(e.target.value)}
-                                className="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                                placeholder="John Doe"
-                            />
-                        </div>
-                    )}
-
-                    {/* Phone Number / OTP Inputs */}
-                    {!otpSent ? (
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Phone Number</label>
-                            <div className="relative">
-                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium z-10 select-none">
-                                    {phoneNumber.startsWith('+') ? '' : '+91 '}
-                                </span>
-                                <input
-                                    type="tel"
-                                    required
-                                    value={phoneNumber}
-                                    onChange={(e) => setPhoneNumber(e.target.value.replace(/[^0-9+]/g, ''))}
-                                    className={`w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all ${!phoneNumber.startsWith('+') ? 'pl-12' : ''}`}
-                                    placeholder="9876543210"
-                                />
-                                <Phone className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                            </div>
-                            <p className="mt-2 text-xs text-slate-500">
-                                We'll send you a verification code via SMS.
-                            </p>
-                        </div>
+                <button
+                    onClick={handleGoogleLogin}
+                    disabled={loading}
+                    className="group relative w-full h-14 flex items-center justify-center gap-3 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500 text-slate-700 dark:text-white font-semibold rounded-xl text-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:-translate-y-0.5"
+                >
+                    {loading ? (
+                        <Loader2 className="w-6 h-6 animate-spin text-primary" />
                     ) : (
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                Enter Verification Code
-                            </label>
-                            <input
-                                type="text"
-                                required={otpSent}
-                                value={otp}
-                                onChange={(e) => setOtp(e.target.value)}
-                                className="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-center tracking-widest text-lg font-bold"
-                                placeholder="123456"
-                                maxLength={6}
-                                autoFocus
-                            />
-                            <div className="flex justify-between items-center mt-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setOtpSent(false)}
-                                    className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-                                >
-                                    Wrong number?
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setOtpSent(false)}
-                                    className="text-xs text-primary font-medium hover:underline"
-                                >
-                                    Resend Code
-                                </button>
-                            </div>
-                        </div>
+                        <>
+                            <svg className="w-6 h-6" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                            </svg>
+                            <span>Continue with Google</span>
+                        </>
                     )}
+                </button>
 
-                    {error && (
-                        <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-sm font-medium animate-in fade-in slide-in-from-top-1">
-                            {error}
-                        </div>
-                    )}
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full h-12 mt-4 rounded-xl bg-primary text-white font-bold text-base hover:bg-blue-700 shadow-lg shadow-blue-200 dark:shadow-none transition-all transform active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                        {loading ? (
-                            <>
-                                <Loader2 className="w-5 h-5 animate-spin" />
-                                {otpSent ? 'Verifying...' : 'Sending OTP...'}
-                            </>
-                        ) : (
-                            otpSent ? 'Verify & Continue' : 'Get OTP'
-                        )}
-                    </button>
-                </form>
+                <div className="mt-8 text-center text-sm text-slate-400 dark:text-slate-500">
+                    By continuing, you agree to our <a href="#" className="underline hover:text-primary transition-colors">Terms of Service</a> and <a href="#" className="underline hover:text-primary transition-colors">Privacy Policy</a>.
+                </div>
 
                 <div className="mt-6 text-center">
-                    <button
-                        onClick={() => {
-                            setIsLogin(!isLogin);
-                            resetForm();
-                        }}
-                        className="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-white transition-colors"
-                    >
-                        {isLogin ? "Don't have an account? Create Account" : "Already have an account? Sign In"}
-                    </button>
+                    <Link to="/" className="text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors">
+                        ← Back to Home
+                    </Link>
                 </div>
             </div>
         </div>
     );
 }
+
