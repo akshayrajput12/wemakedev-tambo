@@ -102,7 +102,7 @@ export default function UserDashboardPage() {
                             <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 size-16 rounded-full border-4 border-white dark:border-zinc-800 bg-cover bg-center" style={{ backgroundImage: `url("${avatarUrl}")` }}></div>
                         </div>
                         <div className="pt-10 pb-4 px-4 text-center border-b border-slate-200 dark:border-zinc-700">
-                            <h3 className="font-bold text-slate-900 dark:text-white hover:underline cursor-pointer">{profile?.full_name || user?.email}</h3>
+                            <h3 className="font-bold text-slate-900 dark:text-white hover:underline cursor-pointer">{profile?.full_name || user?.user_metadata?.full_name || user?.email || user?.phone}</h3>
                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Open to work • {profile?.title || 'Candidate'}</p>
                         </div>
                         <nav className="flex flex-col py-2">
